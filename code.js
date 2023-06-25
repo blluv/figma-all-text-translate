@@ -1,8 +1,9 @@
 figma.showUI(__html__);
 figma.skipInvisibleInstanceChildren = true;
 
-const mapp = {};
+const mapping = {};
 const loadedFonts = [];
+const cache = {}
 
 figma.ui.onmessage = async (msg) => {
   if (msg.type === "translate") {
@@ -26,6 +27,7 @@ figma.ui.onmessage = async (msg) => {
       traverse(element);
     });
 
+    // load fonts
     const fonts = [...new Set(nodes.map((node) => node.fontName.family + "_" + node.fontName.style))];
     for (const font of fonts) {
       if (loadedFonts.includes(font)) continue;
@@ -37,25 +39,40 @@ figma.ui.onmessage = async (msg) => {
 
       loadedFonts.push(font);
     }
+
+    const texts = new Set();
     for (const node of nodes) {
       if (node.type !== "TEXT") continue;
 
-      mapp[node.characters] = mapp[node.characters] || [];
-      mapp[node.characters].push(node);
-    }
-    for (const text of Object.keys(mapp)) {
-      figma.ui.postMessage({ type: "translate", source, target, text, provider });
-    }
-  }
+      mapping[node.characters] = mapping[node.characters] || [];
+      mapping[node.characters].push(node);
 
-  if (msg.type === "translateRes") {
-    const { srcMsg, res } = msg;
+      texts.add(node.characters);
+    }
 
-    const nodes = mapp[srcMsg];
+    for (const text of Object.keys(mapping)) {
+      const cached = cache[`${provider}:${source}:${target}:${text}`];
+      if (cached) {
+        const nodes = mapping[text];
+        for (const node of nodes) {
+          node.characters = res;
+        }
+      } else {
+        figma.ui.postMessage({ type: "translate", source, target, text, provider });
+      }
+    }
+  } else if (msg.type === "translateRes") {
+    const { source, target, srcText, provider, res } = msg;
+
+    cache[`${provider}:${source}:${target}:${srcText}`] = res;
+
+    const nodes = mapping[srcText];
     if (!nodes) return;
 
     for (const node of nodes) {
       node.characters = res;
     }
+
+    delete mapping[srcText];
   }
 };

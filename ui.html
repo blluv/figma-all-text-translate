@@ -35,7 +35,7 @@
           window.parent.postMessage({
             pluginMessage: {
               type: 'translateRes',
-              srcMsg: text,
+              source, target, srcText: text, provider,
               res: msg
             }
           }, '*')

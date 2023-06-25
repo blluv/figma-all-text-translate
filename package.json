@@ -10,6 +10,7 @@
     "@figma/plugin-typings": "*"
   },
   "dependencies": {
+    "lru-cache": "^10.0.0",
     "papago": "^1.1.1"
   }
 }
