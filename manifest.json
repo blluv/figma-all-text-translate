@@ -1,0 +1,10 @@
+{
+  "name": "Translate",
+  "id": "1158781229802212282",
+  "api": "1.0.0",
+  "main": "code.js",
+  "editorType": [
+    "figma"
+  ],
+  "ui": "ui.html"
+}

@@ -1,0 +1,52 @@
+<h2>translate</h2>
+<p>source: <input id="source" value="ko"></p>
+<p>target: <input id="target" value="en"></p>
+<p>provider: <select id="provider">
+    <option name="google" selected>google</option>
+    <option name="papago">papago</option>
+  </select></p>
+<button id="ok">ok</button>
+
+<script>
+  document.getElementById('ok').onclick = () => {
+    const source = document.getElementById('source').value;
+    const target = document.getElementById('target').value;
+    const provider = document.getElementById('provider').value;
+
+    parent.postMessage({ pluginMessage: { type: 'translate', source, target, provider } }, '*')
+  }
+
+  window.onmessage = async (event) => {
+    const msg = event.data.pluginMessage
+    if (msg.type === 'translate') {
+      const { source, target, text, provider } = msg
+
+      const request = new XMLHttpRequest();
+      request.open("POST", "http://127.0.0.1:9090/" + provider);
+
+      request.setRequestHeader("Content-Type", "application/json; charset=UTF-8");
+
+      request.responseType = "json";
+      request.onreadystatechange = () => {
+        if (request.readyState == XMLHttpRequest.DONE) {
+          const res = request.response;
+          const msg = res.translatedText;
+
+          window.parent.postMessage({
+            pluginMessage: {
+              type: 'translateRes',
+              srcMsg: text,
+              res: msg
+            }
+          }, '*')
+        }
+      };
+
+      request.send(JSON.stringify({
+        source,
+        target,
+        text
+      }));
+    }
+  }
+</script>
